@@ -15,11 +15,18 @@ import (
 	"gopkg.in/ldap.v3"
 )
 
-var logFile string
-var ldapAddr string
-var ldapPort uint
-var baseDN string
-var memberOf string
+var (
+	logFile  string
+	ldapAddr string
+	ldapPort uint
+	baseDN   string
+	memberOf string
+)
+
+const (
+	responseOk  = 1
+	responseErr = 0
+)
 
 func init() {
 	flag.StringVar(&logFile, "logfile", "/var/log/mongooseim/ldap_auth.log", "log file path")
@@ -53,7 +60,6 @@ func authenticateUser(username string, password string) bool {
 	}
 
 	searchRequest := ldap.NewSearchRequest(baseDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, searchFilter, []string{"krbPasswordExpiration"}, nil)
-
 	res, er := conn.Search(searchRequest)
 	if er != nil {
 		log.Printf("LDAP 'Search' error - %s", e.Error())
@@ -64,7 +70,6 @@ func authenticateUser(username string, password string) bool {
 	}
 
 	krbPwdExp := res.Entries[0].GetAttributeValue("krbPasswordExpiration")
-
 	if len(krbPwdExp) < 15 {
 		log.Println("LDAP attr 'krbPasswordExpiration' length is too short.")
 		return false
@@ -78,7 +83,6 @@ func authenticateUser(username string, password string) bool {
 	second, _ := strconv.Atoi(krbPwdExp[12:14])
 
 	tmExp := time.Date(year, time.Month(month), day, hour, minute, second, 0, time.UTC)
-
 	if time.Now().After(tmExp) {
 		log.Printf("Password for user '%s' is expired.\n", username)
 		return false
@@ -135,15 +139,15 @@ func main() {
 			result := authenticateUser(user, pass)
 
 			if result {
-				writeResp(1)
+				writeResp(responseOk)
 			} else {
-				writeResp(0)
+				writeResp(responseErr)
 			}
 
 		} else if op == "isuser" {
-			writeResp(1)
+			writeResp(responseOk)
 		} else {
-			writeResp(0)
+			writeResp(responseErr)
 		}
 	}
 }
