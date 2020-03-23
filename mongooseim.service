@@ -1,0 +1,17 @@
+[Unit]
+Description=MongooseIM XMPP Server
+After=network.target
+
+[Service]
+User=mongooseim
+ExecStart=/usr/bin/mongooseimctl foreground
+KillMode=mixed
+Environment="LDAP_SERVER=ldapserver.example.org"
+Environment="LDAP_PORT=389"
+Environment="LDAP_BASEDN=dc=example,dc=org"
+Environment="LDAP_MEMBEROF="
+Environment="LDAP_SECURECONN=false"
+Environment="LDAP_CHECKPWEXPIRED=false"
+
+[Install]
+WantedBy=multi-user.target
